@@ -1,5 +1,6 @@
 from src.AdvGetFileVersion import AdvGetFileVersion
 from src.AdvErrors import ResolveCoreCodeMessage
+from src.AdvOpenFile import AdvFileInfo, AdvOpenFile
 
 # Exercise AdvGetVersion()
 err_msg, version_number1 = AdvGetFileVersion('non-existent_file.adv')
@@ -24,3 +25,30 @@ print('ResolveCoreCodeMessage test 2 passed')
 assert ResolveCoreCodeMessage(0x91001014).startswith('0x91001014 is not')
 print('ResolveCoreCodeMessage test 3 passed')
 
+# Exercise AdvOpenFile
+info_from_file = AdvFileInfo()  # Create struct to hold returned data
+
+ret_value = AdvOpenFile(r'..\ver2-test-file.adv', info_from_file)
+
+assert ret_value == 2
+assert info_from_file.Width == 960
+assert info_from_file.Height == 600
+assert info_from_file.CountMaintFrames == 102
+assert info_from_file.CountCalibrationFrames == 0
+assert info_from_file.DataBpp == 16
+assert info_from_file.MaxPixelValue == 65535
+assert info_from_file.MainClockFrequency == 1000
+assert info_from_file.MainStreamAccuracy == 1
+assert info_from_file.CalibrationClockFrequency == 1000
+assert info_from_file.CalibrationStreamAccuracy == 1
+assert info_from_file.MainStreamTagsCount == 0
+assert info_from_file.CalibrationStreamTagsCount == 0
+assert info_from_file.SystemMetadataTagsCount == 21
+assert info_from_file.UserMetadataTagsCount == 0
+assert info_from_file.UtcTimestampAccuracyInNanoseconds == 1000000
+assert info_from_file.IsColourImage is False
+assert info_from_file.ImageLayoutsCount == 1
+assert info_from_file.StatusTagsCount == 5
+assert info_from_file.ImageSectionTagsCount == 3
+assert info_from_file.ErrorStatusTagId == -1
+print('\nAdvOpenFile test 1 passed')

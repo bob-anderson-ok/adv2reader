@@ -41,8 +41,8 @@ class AdvFileInfo:
 
 
 def AdvOpenFile(filepath: str, fileinfo: AdvFileInfo) -> int:
-    info_format = '6iQiQi4BQ?4H'
-    # The above format specifies 6*int32 int64 int32 int64 4*uint8 int64 bool 4*uint16
+    info_format = '6iQiQi4BQ?4i'
+    # The above format specifies 6*int32 int64 int32 int64 4*uint8 int64 bool 4*uint32
     info_param = pack(info_format,
                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     file_path_as_bytes = bytes(filepath, 'utf-8')
@@ -81,3 +81,11 @@ answer = AdvOpenFile(r'..\ver2-test-file.adv', info_from_file)
 
 print(answer)
 print(info_from_file)
+import dataclasses
+# for field in dataclasses.fields(info_from_file):
+#     print(field.name)
+bob = dataclasses.asdict(info_from_file)
+print(bob)
+for item in bob:
+    # if bob[item] is not 0:
+    print(f'{item:>35} {bob[item]}')
