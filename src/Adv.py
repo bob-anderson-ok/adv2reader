@@ -34,7 +34,7 @@ class AdvIndexEntry:
 class AdvFileInfo:
     Width: int = 0
     Height: int = 0
-    CountMaintFrames: int = 0
+    CountMainFrames: int = 0  # spelling change here --- is CountMaintFrames in C# code
     CountCalibrationFrames: int = 0
     DataBpp: int = 0
     MaxPixelValue: int = 0

@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 from ctypes import *
-import numpy as np
+# import numpy as np
 
 # Just something to change file
+
 
 @dataclass
 class Bob:

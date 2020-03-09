@@ -5,13 +5,17 @@
 # fewer errors would be introduced and it would reduce the intellectual 'load' of comparing
 # the well-tested C# code against its (supposedly) equivalent Python version.
 
-# This module holds all of the static methods that are defined
-# in the C# file PInvoke.cs via 'public static class AdvLib' (this is the pythonic equivalent)
+# We use type hinting so that it is easy to see the intent as matching the C# code
 
-from src.Adv import *
+# This module holds all of the static methods that are defined
+# in the C# file PInvoke.cs via 'public static class AdvLib' (the pythonic equivalent is
+# a module with the methods defined at the top level)
+
+from .Adv import *
 from ctypes import *
 from struct import unpack, pack
 import platform
+from typing import List
 
 # The following tests will run at import time (startup) and raise/throw an exception if we can cannot
 # distinguish Windows 64bit/32bit from Mac 64bit/32bit from Linux 64bit/32bit.  We
@@ -55,7 +59,7 @@ def OpenFile(filepath: str, fileinfo: AdvFileInfo) -> int:
 
     fileinfo.Width = unpack(info_format, file_info)[0]
     fileinfo.Height = unpack(info_format, file_info)[1]
-    fileinfo.CountMaintFrames = unpack(info_format, file_info)[2]
+    fileinfo.CountMainFrames = unpack(info_format, file_info)[2]
     fileinfo.CountCalibrationFrames = unpack(info_format, file_info)[3]
     fileinfo.DataBpp = unpack(info_format, file_info)[4]
     fileinfo.MaxPixelValue = unpack(info_format, file_info)[5]
@@ -74,3 +78,11 @@ def OpenFile(filepath: str, fileinfo: AdvFileInfo) -> int:
     fileinfo.ImageSectionTagsCount = unpack(info_format, file_info)[18]
     fileinfo.ErrorStatusTagId = unpack(info_format, file_info)[19]
     return ret_val
+
+
+def GetIndexEntries(mainFrameCount: int, calibFrameCount: int, mainIndex: List, calibIndex: List) -> None:
+    mainFrameCount += 0
+    calibFrameCount += 0
+    mainIndex.append('None')
+    calibIndex.append('None')
+    print('GetIndexEntries not yet implemented')
