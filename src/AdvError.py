@@ -6,7 +6,7 @@
 # the well-tested C# code against its (supposedly) equivalent Python version.
 
 
-def ResolveCoreCodeMessage(AdvResult: int, kind: str = 'human') -> str:
+def ResolveErrorMessage(AdvResult: int, kind: str = 'human') -> str:
     # The dictionary provides strings that match the enum name of the error,
     # but also a more human readable form.
     if AdvResult in error_dict.keys():

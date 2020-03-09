@@ -1,5 +1,5 @@
 from src.AdvGetFileVersion import AdvGetFileVersion
-from src.AdvErrors import ResolveCoreCodeMessage
+from src.AdvError import ResolveErrorMessage
 from src.AdvOpenFile import AdvFileInfo, AdvOpenFile
 
 # Exercise AdvGetVersion()
@@ -15,19 +15,21 @@ err_msg, version_number3 = AdvGetFileVersion(r'adv2_tests.py')
 assert err_msg.startswith('Error - not an FSTF') and version_number3 == 0
 print('AdvGetFileVersion test 3 passed')
 
-# Exercise ResolveCoreCodeMessage()
-assert ResolveCoreCodeMessage(0x81001014).startswith('The requested frame cannot')
+# Exercise ResolveErrorMessage()
+assert ResolveErrorMessage(0x81001014).startswith('The requested frame cannot')
 print('\nResolveCoreCodeMessage test 1 passed')
 
-assert ResolveCoreCodeMessage(0x81001014, kind='enum').startswith('E_ADV_FRAME_MISSING')
+assert ResolveErrorMessage(0x81001014, kind='enum').startswith('E_ADV_FRAME_MISSING')
 print('ResolveCoreCodeMessage test 2 passed')
 
-assert ResolveCoreCodeMessage(0x91001014).startswith('0x91001014 is not')
+assert ResolveErrorMessage(0x91001014).startswith('0x91001014 is not')
 print('ResolveCoreCodeMessage test 3 passed')
 
 # Exercise AdvOpenFile
 info_from_file = AdvFileInfo()  # Create struct to hold returned data
 
+# Use an r'' (raw string) to specify the filepath so that the \ is
+# not interpreted as an escape character
 ret_value = AdvOpenFile(r'..\ver2-test-file.adv', info_from_file)
 
 assert ret_value == 2
