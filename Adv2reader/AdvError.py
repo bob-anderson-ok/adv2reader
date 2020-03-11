@@ -5,6 +5,15 @@
 # fewer errors would be introduced and it would reduce the intellectual 'load' of comparing
 # the well-tested C# code against its (supposedly) equivalent Python version.
 
+ThrowError = True
+
+
+class AdvLibException(Exception):
+    pass
+
+
+S_OK = 0x00000000
+
 
 def ResolveErrorMessage(AdvResult: int, kind: str = 'human') -> str:
     # The dictionary provides strings that match the enum name of the error,
@@ -16,6 +25,15 @@ def ResolveErrorMessage(AdvResult: int, kind: str = 'human') -> str:
             return error_dict[AdvResult][0]
     else:
         return f'0x{AdvResult:08X} is not a defined AdvResult'
+
+
+def Check(errcode: int) -> bool:
+    if errcode > 0x70000000:
+        if ThrowError:
+            raise AdvLibException(ResolveErrorMessage(errcode))
+        return False
+    else:
+        return True
 
 
 error_dict = {

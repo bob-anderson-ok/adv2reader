@@ -14,6 +14,11 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+class StreamId(Enum):
+    Main = 0
+    Calibration = 1
+
+
 class Adv2TagType(Enum):
     Int8 = 0
     Int16 = 1
@@ -23,11 +28,23 @@ class Adv2TagType(Enum):
     UTF8String = 5
 
 
+class TagPairType(Enum):
+    MainStream = 0
+    CalibrationStream = 1
+    SystemMetaData = 2
+    UserMetaData = 3
+    ImageSection = 4
+    FirstImageLayout = 100
+
+
 @dataclass
-class AdvIndexEntry:
-    ElapsedTicks: int = 0
-    FrameOffset: int = 0
-    BytesCount: int = 0
+class AdvImageLayoutInfo:
+    ImageLayoutId: int = 0
+    ImageLayoutTagsCount: int = 0
+    ImageLayoutBpp: int = 0
+    IsFullImageRaw: bool = False
+    Is12BitImagePacked: bool = False
+    Is8BitColourPacked: bool = False
 
 
 @dataclass
@@ -53,3 +70,42 @@ class AdvFileInfo:
     ImageSectionTagsCount: int = 0
     ErrorStatusTagId: int = 0
 
+
+@dataclass
+class AdvIndexEntry:
+    ElapsedTicks: int = 0
+    FrameOffset: int = 0
+    BytesCount: int = 0
+
+
+@dataclass
+class AdvFrameInfo:
+    StartTicksLo: int = 0
+    StartTicksHi: int = 0
+    EndTicksLo: int = 0
+    EndTicksHi: int = 0
+
+    UtcMidExposureTimestampLo: int = 0
+    UtcMidExposureTimestampHi: int = 0
+    Exposure: int = 0
+
+    Gamma: float = 0.0
+    Gain: float = 0.0
+    Shutter: float = 0.0
+    Offset: float = 0.0
+
+    GPSTrackedSatellites: int = 0  # Spelling correction for satellites applied here
+    GPSAlmanacStatus: int = 0
+    GPSFixStatus: int = 0
+    GPSAlmanacOffset: int = 0
+
+    VideoCameraFrameIdLo: int = 0
+    VideoCameraFrameIdHi: int = 0
+    HardwareTimerFrameIdLo: int = 0
+    HardwareTimerFrameIdHi = 0
+
+    SystemTimestampLo: int = 0
+    SystemTimestampHi: int = 0
+
+    ImageLayoutId = 0
+    RawDataBlockSize = 0

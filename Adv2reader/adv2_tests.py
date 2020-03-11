@@ -1,6 +1,5 @@
-from src.AdvGetFileVersion import AdvGetFileVersion
-from src.AdvError import ResolveErrorMessage
-from src.AdvOpenFile import AdvFileInfo, AdvOpenFile
+from AdvLib import *
+from AdvError import ResolveErrorMessage
 
 # Exercise AdvGetVersion()
 err_msg, version_number1 = AdvGetFileVersion('non-existent_file.adv')
@@ -35,7 +34,7 @@ ret_value = AdvOpenFile(r'..\ver2-test-file.adv', info_from_file)
 assert ret_value == 2
 assert info_from_file.Width == 960
 assert info_from_file.Height == 600
-assert info_from_file.CountMaintFrames == 102
+assert info_from_file.CountMainFrames == 102
 assert info_from_file.CountCalibrationFrames == 0
 assert info_from_file.DataBpp == 16
 assert info_from_file.MaxPixelValue == 65535
