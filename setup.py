@@ -2,11 +2,7 @@ from setuptools import setup
 import pathlib
 import Version
 
-###################################################################
-
 VERSION = Version.version()
-
-NAME = "Adv2reader"
 
 KEYWORDS = ["ADV file reader", 'Astro Digital Video version 2 file reader']
 
@@ -28,11 +24,11 @@ HERE = pathlib.Path.cwd()
 README = (HERE / "README.md").read_text()
 
 setup(
-    name=NAME,
+    name="Adv2reader",
     python_requires='>=3.7',
-    description='Adv2reader read version 2 Astro Digital Video files.',
+    description='Adv2reader reads version 2 Astro Digital Video files.',
     license='License :: OSI Approved :: MIT License',
-    url=r'https://github.com/bob-anderson-ok/pyadv2',
+    url=r'https://github.com/bob-anderson-ok/Adv2reader',
     version=VERSION,
     author='Bob Anderson',
     author_email='bob.anderson.ok@gmail.com',
@@ -41,7 +37,6 @@ setup(
     keywords=KEYWORDS,
     long_description=README,
     packages=["Adv2reader"],
-    package_data={'': ['*.bat']},
     include_package_data=True,
     classifiers=CLASSIFIERS,
     install_requires=INSTALL_REQUIRES,
