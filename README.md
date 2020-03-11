@@ -1,13 +1,14 @@
-Adv2reader
+adv2reader
 ==========
 
 This package provides a 'reader' for .adv files.
 
-The specification for the Astro Digital Video version 2 files can be found at: (TBD)
+The specification for Astro Digital Video files can be 
+found at: <http://www.astrodigitalvideoformat/spec.html>
 
 To install this package on your system:
 
-    pip install Adv2reader
+    pip install adv2reader
 
 Then, sample usage is:
 
@@ -59,6 +60,7 @@ in the case of a color image.
 Finally, the file should closed as in the example below:
 
     print(f'closeFile returned: {rdr.closeFile()}')
+    rdr = None
     
 The value returned will be the version (2) of the file closed or 0, which indicates an attempt to close a file that was
 already closed.
