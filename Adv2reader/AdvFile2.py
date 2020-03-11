@@ -90,7 +90,8 @@ for frame in range(rdr.CountMainFrames):
         print(f'\nframe: {frame}')
         print(frameInfo.UtcMidExposureTimestampLo)
         print(frameInfo.UtcMidExposureTimestampHi)
-        print(np.min(image), np.max(image), np.mean(image))
+        print(frameInfo.Exposure)
 
 print('SysMetaNum: ', rdr.FileInfo.SystemMetadataTagsCount)
+print(f'closeFile returned: {rdr.closeFile()}')
 print(f'closeFile returned: {rdr.closeFile()}')
