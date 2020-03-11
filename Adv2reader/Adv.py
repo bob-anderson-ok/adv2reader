@@ -1,14 +1,12 @@
 # The naming conventions follow those used in github.com/AstroDigitalVideo/ADVlib
-# The Python code is closely modelled after the C# code written by Hristo Pavlov
-# with the intent of matching names, semantics, and code flow as closely as
-# possible. While not exactly 'Pythonic', it was my judgement (Bob Anderson) that
-# fewer errors would be introduced and it would reduce the intellectual 'load' of comparing
-# the well-tested C# code against its (supposedly) equivalent Python version.
+# While not exactly 'Pythonic' (i.e., not snake case), it was my judgement (Bob Anderson) that
+# fewer errors would be introduced and would reduce the intellectual 'load' of comparing
+# the Python code against the equivalent code in github.com/AstroDigitalVideo/ADVlib
 
 # This module holds all of the enums and structures that are defined
 # in the C# file PInvoke.cs in the namespace Adv (equivalent to a Python module/file)
 
-# We use type hinting so that it is easy to see the intent as matching the C# code
+# We use type hinting so that it is easy to see the intent as matching the C++/C# code
 
 from dataclasses import dataclass
 from enum import Enum

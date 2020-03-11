@@ -1,13 +1,11 @@
 # The naming conventions follow those used in github.com/AstroDigitalVideo/ADVlib
-# The Python code is closely modelled after the C# code written by Hristo Pavlov
-# with the intent of matching names, semantics, and code flow as closely as
-# possible. While not exactly 'Pythonic', it was my judgement (Bob Anderson) that
-# fewer errors would be introduced and it would reduce the intellectual 'load' of comparing
-# the well-tested C# code against its (supposedly) equivalent Python version.
-
-ThrowError = True
+# While not exactly 'Pythonic' (i.e., not snake case), it was my judgement (Bob Anderson) that
+# fewer errors would be introduced and would reduce the intellectual 'load' of comparing
+# the Python code against the equivalent code in github.com/AstroDigitalVideo/ADVlib
 
 
+# Define a Exception that we can throw that automatically identifies itself
+# as coming from the Adv2reader package.
 class AdvLibException(Exception):
     pass
 
@@ -25,15 +23,6 @@ def ResolveErrorMessage(AdvResult: int, kind: str = 'human') -> str:
             return error_dict[AdvResult][0]
     else:
         return f'0x{AdvResult:08X} is not a defined AdvResult'
-
-
-def Check(errcode: int) -> bool:
-    if errcode > 0x70000000:
-        if ThrowError:
-            raise AdvLibException(ResolveErrorMessage(errcode))
-        return False
-    else:
-        return True
 
 
 error_dict = {
