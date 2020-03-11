@@ -4,7 +4,7 @@ adv2reader
 This package provides a 'reader' for .adv files.
 
 The specification for Astro Digital Video files can be 
-found at: <http://www.astrodigitalvideoformat/spec.html>
+found at: <http://www.astrodigitalvideoformat.org/spec.html>
 
 To install this package on your system:
 
