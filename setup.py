@@ -28,7 +28,7 @@ setup(
     python_requires='>=3.7',
     description='Adv2reader reads version 2 Astro Digital Video files.',
     license='License :: OSI Approved :: MIT License',
-    url=r'https://github.com/bob-anderson-ok/Adv2reader',
+    url=r'https://github.com/bob-anderson-ok/adv2reader',
     version=VERSION,
     author='Bob Anderson',
     author_email='bob.anderson.ok@gmail.com',
