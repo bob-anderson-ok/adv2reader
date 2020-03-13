@@ -1,7 +1,7 @@
 adv2reader
 ==========
 
-This package provides a 'reader' for .adv files.
+This package provides a 'reader' for .adv (AstroDigitalVideo) files.
 
 The specification for Astro Digital Video files can be 
 found at: <http://www.astrodigitalvideoformat.org/spec.html>
@@ -13,11 +13,14 @@ To install this package on your system:
 Then, sample usage is:
 
     from adv2reader import *
+    from pathlib import Path
     
     rdr = None
     try:
+        # Create a platform agnostic path to test file (use forward slashes)
+        file_path = str(Path('../ver2-test-file.adv'))  # Python will make Window version when needed
         # Create a 'reader' for the given file
-        rdr = Adv2reader(r'..\ver2-test-file.adv')
+        rdr = Adv2reader(file_path)
     except AdvLibException as adverr:
         # The file could not be found or was not a version 2 .adv file
         print(repr(adverr))
@@ -53,14 +56,13 @@ Continuing with the example:
 `err` is a string that will be empty if image bytes and metadata where successfully extracted.
 In that case, `image` will contain a numpy array of uint16 values.
 
-The 'shape' of image will be `image[Height, Width]` for grayscale images
-and `image[Height, Width, colorChannel]` (where colorChannel is 0, 1, or 2)
-in the case of a color image.
+The 'shape' of image will be `image[Height, Width]` for grayscale images. Color video
+files are not yet supported.
 
 Finally, the file should closed as in the example below:
 
     print(f'closeFile returned: {rdr.closeFile()}')
     rdr = None
     
-The value returned will be the version (2) of the file closed or 0, which indicates an attempt to close a file that was
+The value returned will be the version number (2) of the file closed or 0, which indicates an attempt to close a file that was
 already closed.

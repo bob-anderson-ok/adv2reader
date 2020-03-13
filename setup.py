@@ -11,7 +11,7 @@ CLASSIFIERS = [
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "License :: OSI Approved :: MIT License",
-    # "Operating System :: MacOS :: MacOS X",
+    "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3.7",
     "Topic :: Scientific/Engineering",

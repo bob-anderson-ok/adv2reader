@@ -22,27 +22,36 @@ import pathlib
 if platform.system().lower().startswith('windows'):
     # We're running on a on a Windows system
     if platform.architecture()[0] == '64bit':
-        advDLL = CDLL(r'..\Adv2DLLlibs\AdvLib.Core64.dll')
+        # We do this call to generate platform agnostic filepath (deals with / \ issue
+        file_path = pathlib.Path('../Adv2DLLlibs/AdvLib.Core64.dll')
+        advDLL = CDLL(file_path)
     elif platform.architecture()[0] == '32bit':
-        advDLL = CDLL(r'..\Adv2DLLlibs\AdvLib.Core32.dll')
+        file_path = pathlib.Path('../Adv2DLLlibs/AdvLib.Core32.dll')
+        advDLL = CDLL(file_path)
     else:
-        raise ImportWarning("System is neither 64 bit nor 32 bit.")
+        raise ImportError("System is neither 64 bit nor 32 bit.")
 elif platform.system().lower().startswith('darwin'):
     # We're running on MacOS
     if platform.architecture()[0] == '64bit':
-        advDLL = CDLL(r'..\Adv2DLLlibs\AdvLibMac.Core64.dll')
+        # We do this call to generate platform agnostic filepath (deals with / \ issue
+        file_path = pathlib.Path('../Adv2DLLlibs/libAdvCore.dylib')
+        advDLL = CDLL(file_path)
     elif platform.architecture()[0] == '32bit':
-        advDLL = CDLL(r'..\Adv2DLLlibs\AdvLibMac.Core32.dll')
+        raise ImportError("No 32 bit library available for MacOS")
     else:
-        raise ImportWarning("System is neither 64 bit nor 32 bit.")
+        raise ImportError("System is neither 64 bit nor 32 bit.")
 elif platform.system().lower().startswith('linux'):
     # We're running on a linux system
     if platform.architecture()[0] == '64bit':
-        advDLL = CDLL(r'..\Adv2DLLlibs\AdvLibLinux.Core64.dll')
+        # This is a made-up file name for now
+        file_path = pathlib.Path('../Adv2DLLlibs/AdvLibLinux.Core64.dll')
+        advDLL = CDLL(file_path)
     elif platform.architecture()[0] == '32bit':
-        advDLL = CDLL(r'..\Adv2DLLlibs\AdvLibLinux.Core32.dll')
+        # This is a made-up file name for now
+        file_path = pathlib.Path('../Adv2DLLlibs/AdvLibLinux.Core32.dll')
+        advDLL = CDLL(file_path)
     else:
-        raise ImportWarning("System is neither 64 bit nor 32 bit.")
+        raise ImportError("System is neither 64 bit nor 32 bit.")
 
 
 def AdvOpenFile(filepath: str, fileinfo: AdvFileInfo) -> int:
@@ -137,3 +146,16 @@ def AdvVer2_GetFramePixels(streamId: StreamId, frameNo: int,
     frameInfo.RawDataBlockSize = unpack(advFrameInfoFormat, frame_info)[22]
 
     return ret_val
+
+
+def AdvVer2_GetTagPairValues(tagPairType: TagPairType, tagId: int) -> (int, str, str):
+    # Create big buffers of bytes to hold char string returns
+    tagName = bytes('\0' * 256, 'utf8')
+    tagValue = bytes('\0' * 256, 'utf8')
+    ret_val = advDLL.AdvVer2_GetTagPairValues(
+        c_int(tagPairType.value),
+        c_int(tagId),
+        c_char_p(tagName),
+        c_char_p(tagValue)
+    )
+    return ret_val, tagName, tagValue

@@ -13,6 +13,7 @@ from AdvError import AdvLibException
 import os
 from ctypes import *
 import numpy as np
+import pathlib
 
 
 # @dataclass
@@ -51,18 +52,21 @@ class Adv2reader:
         self.FileInfo = fileInfo
 
         # Create an array of c_uint to hold the pixel values
-        # TODO Adapt to colour required
-        self.pixels = (c_uint * (fileInfo.Width * fileInfo.Height))()
+        # pixel_array = (c_uint * (fileInfo.Width * fileInfo.Height))()
+        self.pixels = None
         self.sysErrLength: int = 0
         self.frameInfo = AdvFrameInfo()
 
-    def getMainImageData(self, frameNumber: int) -> Tuple[str, Array, AdvFrameInfo]:
+    def getMainImageData(self, frameNumber: int) -> Tuple[str, np.ndarray, AdvFrameInfo]:
         err_msg = ''
+        # Create an array of c_uint to hold the pixel values
+        pixel_array = (c_uint * (self.Width * self.Height))()
 
         ret_val = AdvLib.AdvVer2_GetFramePixels(
             streamId=StreamId.Main, frameNo=frameNumber,
-            pixels=self.pixels, frameInfo=self.frameInfo, systemErrorLen=self.sysErrLength
+            pixels=pixel_array, frameInfo=self.frameInfo, systemErrorLen=self.sysErrLength
         )
+        self.pixels = np.reshape(np.array(pixel_array, dtype='uint16'), newshape=(self.Height, self.Width))
         if not ret_val == AdvError.S_OK:
             err_msg = AdvError.ResolveErrorMessage(ret_val)
             return err_msg, self.pixels, self.frameInfo
@@ -76,13 +80,15 @@ class Adv2reader:
 
 rdr = None
 try:
-    rdr = Adv2reader(r'..\ver2-test-file.adv')
+    file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
+    rdr = Adv2reader(file_path)
 except AdvLibException as adverr:
     print(repr(adverr))
     exit()
 
 print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
+image = None
 for frame in range(rdr.CountMainFrames):
     err, image, frameInfo = rdr.getMainImageData(frameNumber=frame)
 
@@ -92,6 +98,7 @@ for frame in range(rdr.CountMainFrames):
         print(frameInfo.UtcMidExposureTimestampHi)
         print(frameInfo.Exposure)
 
+print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
 print('SysMetaNum: ', rdr.FileInfo.SystemMetadataTagsCount)
 print(f'closeFile returned: {rdr.closeFile()}')
 print(f'closeFile returned: {rdr.closeFile()}')
