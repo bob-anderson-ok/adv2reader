@@ -83,7 +83,6 @@ class Adv2reader:
             calibList = []
 
             base = 0
-            print(mainIndex[0:6])
             for i in range(self.CountMainFrames):
                 ticks = mainIndex[base] + (mainIndex[base + 1] << 32)
                 offset = mainIndex[base + 2] + (mainIndex[base + 3] << 32)

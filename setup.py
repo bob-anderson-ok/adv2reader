@@ -1,6 +1,7 @@
 from setuptools import setup
 import pathlib
-import Version
+from Adv2reader import Version
+
 
 VERSION = Version.version()
 
