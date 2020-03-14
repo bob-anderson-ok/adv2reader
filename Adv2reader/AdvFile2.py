@@ -5,7 +5,7 @@
 
 # We use type hinting so that it is easy to see the intent as matching the C++ code
 
-from typing import Tuple
+from typing import Tuple, Dict, List
 from Adv import *
 import AdvLib
 import AdvError
@@ -14,21 +14,6 @@ import os
 from ctypes import *
 import numpy as np
 import pathlib
-
-
-# @dataclass
-# class DataStreamDefinition:
-#     FrameCount: int = 0
-#     ClockFrequency: int = 0  # Python ints can hold an int64
-#     TimingAccuracy: int = 0
-#     MetaDataTags: Dict[str, str] = field(default_factory=dict)
-#
-#
-# @dataclass
-# class ImageLayoutDefinition:
-#     LayoutId: int = 0
-#     Bpp: int = 0
-#     ImageLayoutTags: Dict[str, str] = field(default_factory=dict)
 
 
 class Adv2reader:
@@ -48,11 +33,10 @@ class Adv2reader:
         self.Width = fileInfo.Width
         self.Height = fileInfo.Height
         self.CountMainFrames = fileInfo.CountMainFrames
+        self.CountCalibrationFrames = fileInfo.CountCalibrationFrames
 
         self.FileInfo = fileInfo
 
-        # Create an array of c_uint to hold the pixel values
-        # pixel_array = (c_uint * (fileInfo.Width * fileInfo.Height))()
         self.pixels = None
         self.sysErrLength: int = 0
         self.frameInfo = AdvFrameInfo()
@@ -66,39 +50,115 @@ class Adv2reader:
             streamId=StreamId.Main, frameNo=frameNumber,
             pixels=pixel_array, frameInfo=self.frameInfo, systemErrorLen=self.sysErrLength
         )
+
+        # Convert pixel_array to 1D numpy array, then reshape into 2D numpy array
         self.pixels = np.reshape(np.array(pixel_array, dtype='uint16'), newshape=(self.Height, self.Width))
+
         if not ret_val == AdvError.S_OK:
             err_msg = AdvError.ResolveErrorMessage(ret_val)
             return err_msg, self.pixels, self.frameInfo
 
         return err_msg, self.pixels, self.frameInfo
 
+    def getMetaData(self) -> Dict[str, str]:
+        meta_dict = {}
+        if self.FileInfo.SystemMetadataTagsCount > 0:
+            for entryNum in range(self.FileInfo.SystemMetadataTagsCount):
+                err_msg, name, value = AdvLib.AdvVer2_GetTagPairValues(TagPairType.SystemMetaData, entryNum)
+                if not err_msg:
+                    meta_dict.update({name: value})
+        return meta_dict
+
+    def getIndexEntries(self) -> Tuple[List[AdvIndexEntry], List[AdvIndexEntry]]:
+        # Create C compatible buffers that hold the correct number of AdvIndexEntry instances.
+        # Although an AdvIndexEntry is 2 int64 and an int32, we have to allow for 'alignment' on int64
+        # boundaries - that's the reason for the 6 c_int rather than 5 c_int in the buffer construction
+        mainIndex = (c_int * (6 * self.CountMainFrames))()
+        calibIndex = (c_int * (6 * self.CountCalibrationFrames))()
+
+        ret_val = AdvLib.AdvVer2_GetIndexEntries(mainIndex, calibIndex)
+
+        if ret_val == AdvError.S_OK:
+            mainList = []
+            calibList = []
+
+            base = 0
+            print(mainIndex[0:6])
+            for i in range(self.CountMainFrames):
+                ticks = mainIndex[base] + (mainIndex[base + 1] << 32)
+                offset = mainIndex[base + 2] + (mainIndex[base + 3] << 32)
+                byte_count = mainIndex[base + 4]
+
+                new_index_entry = AdvIndexEntry()
+                new_index_entry.ElapsedTicks = ticks
+                new_index_entry.FrameOffset = offset
+                new_index_entry.BytesCount = byte_count
+
+                mainList.append(new_index_entry)
+                base += 6
+
+            base = 0
+            for i in range(self.CountCalibrationFrames):
+                ticks = calibIndex[base] + (calibIndex[base + 1] << 32)
+                offset = calibIndex[base + 2] + (calibIndex[base + 3] << 32)
+                byte_count = calibIndex[base + 4]
+
+                new_index_entry = AdvIndexEntry()
+                new_index_entry.ElapsedTicks = ticks
+                new_index_entry.FrameOffset = offset
+                new_index_entry.BytesCount = byte_count
+
+                calibList.append(new_index_entry)
+                base += 6
+
+            return mainList, calibList
+        else:
+            raise AdvLibException(f'{AdvError.ResolveErrorMessage(ret_val)}')
+
     @staticmethod
     def closeFile():
         return AdvLib.AdvCloseFile()
 
 
-rdr = None
-try:
-    file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
-    rdr = Adv2reader(file_path)
-except AdvLibException as adverr:
-    print(repr(adverr))
-    exit()
+def exerciser():
 
-print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
+    rdr = None
+    try:
+        file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
+        rdr = Adv2reader(file_path)
+    except AdvLibException as adverr:
+        print(repr(adverr))
+        exit()
 
-image = None
-for frame in range(rdr.CountMainFrames):
-    err, image, frameInfo = rdr.getMainImageData(frameNumber=frame)
+    # Show some top level instance variables
+    print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
-    if not err:
-        print(f'\nframe: {frame}')
-        print(frameInfo.UtcMidExposureTimestampLo)
-        print(frameInfo.UtcMidExposureTimestampHi)
-        print(frameInfo.Exposure)
+    # Show a few index entries
+    mainIndexList, calibIndexList = rdr.getIndexEntries()
+    for i in range(3):
+        print(f'\nindex: {i:2d} ElapsedTicks: {mainIndexList[i].ElapsedTicks}')
+        print(f'index: {i:2d}  FrameOffset: {mainIndexList[i].FrameOffset}')
+        print(f'index: {i:2d}   BytesCount: {mainIndexList[i].BytesCount}')
 
-print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
-print('SysMetaNum: ', rdr.FileInfo.SystemMetadataTagsCount)
-print(f'closeFile returned: {rdr.closeFile()}')
-print(f'closeFile returned: {rdr.closeFile()}')
+    image = None
+    for frame in range(rdr.CountMainFrames):
+        err, image, frameInfo = rdr.getMainImageData(frameNumber=frame)
+
+        if not err:
+            print(f'\nframe: {frame}')
+            print(frameInfo.UtcMidExposureTimestampLo)
+            print(frameInfo.UtcMidExposureTimestampHi)
+            print(frameInfo.Exposure)
+        else:
+            print(err)
+
+    print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
+    meta_data = rdr.getMetaData()
+    for key in meta_data.keys():
+        print(f'{key}: {meta_data[key]}')
+    print(f'\ncloseFile returned: {rdr.closeFile()}')
+    print(f'\nun-needed closeFile returned: {rdr.closeFile()}\n')
+
+
+if __name__ == "__main__":
+    exerciser()

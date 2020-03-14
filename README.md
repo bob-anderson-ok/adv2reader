@@ -17,8 +17,8 @@ Then, sample usage is:
     
     rdr = None
     try:
-        # Create a platform agnostic path to test file (use forward slashes)
-        file_path = str(Path('../ver2-test-file.adv'))  # Python will make Window version when needed
+        # Create a platform agnostic path to the test file (use forward slashes)
+        file_path = str(Path('../ver2-test-file.adv'))  # Python will make Windows version as needed
         # Create a 'reader' for the given file
         rdr = Adv2reader(file_path)
     except AdvLibException as adverr:
@@ -32,7 +32,7 @@ Here we print some of those out:
 
     print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
-There is an instance variable called `FileIno` which gives access to all
+There is also an composite instance variable called `FileIno` which gives access to all
 of the values defined in the structure `AdvFileInfo` (there are 20 of them).
 
 For example:
@@ -54,7 +54,8 @@ Continuing with the example:
             print(frameInfo.Exposure)
 
 `err` is a string that will be empty if image bytes and metadata where successfully extracted.
-In that case, `image` will contain a numpy array of uint16 values.
+In that case, `image` will contain a numpy array of uint16 values. If `err` is not empty, it will contain
+a human-readle description of the error encountered.
 
 The 'shape' of image will be `image[Height, Width]` for grayscale images. Color video
 files are not yet supported.
