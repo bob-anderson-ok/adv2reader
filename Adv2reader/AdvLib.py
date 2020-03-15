@@ -195,15 +195,18 @@ def AdvVer2_GetIndexEntries(mainIndex, calibrationIndex) -> int:
     # ret_val is an int32.  We need to remove the sign-extension that happens during the int64 conversion
     return ret_val & 0xffffffff
 
+
 def GetLibraryVersion() -> str:
     libVer = bytes('\0' * 256, 'utf8')
     advDLL.GetLibraryVersion(c_char_p(libVer))
     return libVer.decode().strip('\0')
 
+
 def GetLibraryPlatformId() -> str:
-    platform = bytes('\0' * 256, 'utf8')
-    advDLL.GetLibraryPlatformId(c_char_p(platform))
-    return platform.decode().strip('\0')
+    platform_str = bytes('\0' * 256, 'utf8')
+    advDLL.GetLibraryPlatformId(c_char_p(platform_str))
+    return platform_str.decode().strip('\0')
+
 
 def GetLibraryBitness() -> int:
     ret_val = advDLL.GetLibraryBitness()

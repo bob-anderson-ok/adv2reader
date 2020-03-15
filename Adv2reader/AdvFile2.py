@@ -14,9 +14,11 @@ import numpy as np
 
 import AdvError
 import AdvLib
-from Adv import (Adv2TagType, AdvFileInfo, AdvFrameInfo, AdvIndexEntry,
+from Adv import (AdvFileInfo, AdvFrameInfo, AdvIndexEntry,
                  StreamId, TagPairType)
 from AdvError import AdvLibException
+
+import matplotlib.pyplot as plt
 
 
 class Adv2reader:
@@ -123,14 +125,14 @@ class Adv2reader:
 
 
 def exerciser():
-
     print(f'\nlibrary: {AdvLib.GetLibraryVersion()}')
     print(f'\nplatform: {AdvLib.GetLibraryPlatformId()}')
     print(f'\nbitness: {AdvLib.GetLibraryBitness()}\n')
 
     rdr = None
     try:
-        file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
+        # file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
+        file_path = str(pathlib.Path('../UnitTestSample.adv'))  # Platform agnostic way to specify a file path
         rdr = Adv2reader(file_path)
     except AdvLibException as adverr:
         print(repr(adverr))
@@ -139,26 +141,34 @@ def exerciser():
     # Show some top level instance variables
     print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
+    print(f'\nis color image: {rdr.FileInfo.IsColourImage}\n')
     # Show a few main index entries
     mainIndexList, _ = rdr.getIndexEntries()
-    for i in range(3):
+    for i in range(len(mainIndexList)):
+    # for i in range(3):
         print(f'\nindex: {i:2d} ElapsedTicks: {mainIndexList[i].ElapsedTicks}')
         print(f'index: {i:2d}  FrameOffset: {mainIndexList[i].FrameOffset}')
         print(f'index: {i:2d}   BytesCount: {mainIndexList[i].BytesCount}')
 
     image = None
-    # for frame in range(rdr.CountMainFrames):
-    for frame in range(4):
+    for frame in range(rdr.CountMainFrames):
+    # for frame in range(4):
         err, image, frameInfo = rdr.getMainImageData(frameNumber=frame)
 
         if not err:
-            print(f'\nframe: {frame}')
-            print(frameInfo.UtcMidExposureTimestampLo)
-            print(frameInfo.UtcMidExposureTimestampHi)
-            print(frameInfo.Exposure)
+            print(f'\nframe:       {frame}')
+            print(f'UtcMidLo:    {frameInfo.UtcMidExposureTimestampLo}')
+            print(f'UtcMidHi:    {frameInfo.UtcMidExposureTimestampHi}')
+            print(f'Exposure:    {frameInfo.Exposure}')
+            print(f'RawDataSize: {frameInfo.RawDataBlockSize}')
+            # print(np.min(image), np.max(image))
+            plt.imshow(image)
+            plt.show()
         else:
             print(err)
 
+    plt.imshow(image)
+    plt.show()
     print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
     meta_data = rdr.getMetaData()
     for key in meta_data.keys():
