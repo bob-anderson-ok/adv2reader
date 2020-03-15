@@ -10,11 +10,17 @@
 # 'public static class Adv2DLLlibs' (the pythonic equivalent is
 # a module with the methods defined at the top level, such as this)
 
-from Adv import *
-from ctypes import *
-from struct import unpack, pack
-import platform
+import os
 import pathlib
+import platform
+from ctypes import CDLL, byref, c_char_p, c_int, c_uint
+from struct import pack, unpack
+from typing import Tuple
+
+from Adv import AdvFileInfo, AdvFrameInfo, StreamId, TagPairType
+
+print(os.getcwd())
+
 
 # The following code/tests will run at import time (startup) and raise/throw an exception if we can cannot
 # distinguish Windows 64bit/32bit from Mac 64bit/32bit from Linux 64bit/32bit or find libraries.  We
@@ -105,7 +111,7 @@ def AdvCloseFile() -> int:
     return ret_val & 0xffffffff
 
 
-def AdvGetFileVersion(filepath: str) -> (str, int):
+def AdvGetFileVersion(filepath: str) -> Tuple[str, int]:
     if not pathlib.Path(filepath).is_file():
         return f'Error - cannot find file: {filepath}', 0
     else:
@@ -122,7 +128,7 @@ def AdvGetFileVersion(filepath: str) -> (str, int):
 
 
 def AdvVer2_GetFramePixels(streamId: StreamId, frameNo: int,
-                           pixels: Array, frameInfo: AdvFrameInfo, systemErrorLen: int) -> int:
+                           pixels: c_uint, frameInfo: AdvFrameInfo, systemErrorLen: int) -> int:
 
     advFrameInfoFormat = '7I4f3Bb8I'  # format of AdvFrameInfo needed by pack() and unpack()
     # The above format specifies 7 * uint32 4 * float32 3 * uchar char 8 * uint32
@@ -169,7 +175,7 @@ def AdvVer2_GetFramePixels(streamId: StreamId, frameNo: int,
     return ret_val & 0xffffffff
 
 
-def AdvVer2_GetTagPairValues(tagPairType: TagPairType, tagId: int) -> (int, str, str):
+def AdvVer2_GetTagPairValues(tagPairType: TagPairType, tagId: int) -> Tuple[int, str, str]:
     # Create big buffers of bytes to hold char string returns
     tagName = bytes('\0' * 256, 'utf8')
     tagValue = bytes('\0' * 256, 'utf8')
@@ -190,3 +196,17 @@ def AdvVer2_GetIndexEntries(mainIndex, calibrationIndex) -> int:
     ret_val = advDLL.AdvVer2_GetIndexEntries(mainIndex, calibrationIndex)
     # ret_val is an int32.  We need to remove the sign-extension that happens during the int64 conversion
     return ret_val & 0xffffffff
+
+def GetLibraryVersion() -> str:
+    libVer = bytes('\0' * 256, 'utf8')
+    advDLL.GetLibraryVersion(c_char_p(libVer))
+    return libVer.decode().strip('\0')
+
+def GetLibraryPlatformId() -> str:
+    platform = bytes('\0' * 256, 'utf8')
+    advDLL.GetLibraryPlatformId(c_char_p(platform))
+    return platform.decode().strip('\0')
+
+def GetLibraryBitness() -> int:
+    ret_val = advDLL.GetLibraryBitness()
+    return ret_val

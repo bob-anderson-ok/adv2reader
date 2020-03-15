@@ -5,15 +5,18 @@
 
 # We use type hinting so that it is easy to see the intent as matching the C++ code
 
-from typing import Tuple, Dict, List
-from Adv import *
-import AdvLib
-import AdvError
-from AdvError import AdvLibException
 import os
-from ctypes import *
-import numpy as np
 import pathlib
+from ctypes import c_int, c_uint
+from typing import Dict, List, Tuple
+
+import numpy as np
+
+import AdvError
+import AdvLib
+from Adv import (Adv2TagType, AdvFileInfo, AdvFrameInfo, AdvIndexEntry,
+                 StreamId, TagPairType)
+from AdvError import AdvLibException
 
 
 class Adv2reader:
@@ -83,7 +86,7 @@ class Adv2reader:
             calibList = []
 
             base = 0
-            for i in range(self.CountMainFrames):
+            for _ in range(self.CountMainFrames):
                 ticks = mainIndex[base] + (mainIndex[base + 1] << 32)
                 offset = mainIndex[base + 2] + (mainIndex[base + 3] << 32)
                 byte_count = mainIndex[base + 4]
@@ -97,7 +100,7 @@ class Adv2reader:
                 base += 6
 
             base = 0
-            for i in range(self.CountCalibrationFrames):
+            for _ in range(self.CountCalibrationFrames):
                 ticks = calibIndex[base] + (calibIndex[base + 1] << 32)
                 offset = calibIndex[base + 2] + (calibIndex[base + 3] << 32)
                 byte_count = calibIndex[base + 4]
@@ -121,6 +124,10 @@ class Adv2reader:
 
 def exerciser():
 
+    print(f'\nlibrary: {AdvLib.GetLibraryVersion()}')
+    print(f'\nplatform: {AdvLib.GetLibraryPlatformId()}')
+    print(f'\nbitness: {AdvLib.GetLibraryBitness()}\n')
+
     rdr = None
     try:
         file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
@@ -132,15 +139,16 @@ def exerciser():
     # Show some top level instance variables
     print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
-    # Show a few index entries
-    mainIndexList, calibIndexList = rdr.getIndexEntries()
+    # Show a few main index entries
+    mainIndexList, _ = rdr.getIndexEntries()
     for i in range(3):
         print(f'\nindex: {i:2d} ElapsedTicks: {mainIndexList[i].ElapsedTicks}')
         print(f'index: {i:2d}  FrameOffset: {mainIndexList[i].FrameOffset}')
         print(f'index: {i:2d}   BytesCount: {mainIndexList[i].BytesCount}')
 
     image = None
-    for frame in range(rdr.CountMainFrames):
+    # for frame in range(rdr.CountMainFrames):
+    for frame in range(4):
         err, image, frameInfo = rdr.getMainImageData(frameNumber=frame)
 
         if not err:
