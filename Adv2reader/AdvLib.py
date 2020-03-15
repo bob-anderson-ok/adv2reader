@@ -51,13 +51,11 @@ elif platform.system().lower().startswith('linux'):
     # We're running on a linux system
     if platform.architecture()[0] == '64bit':
         # The following line generates a platform agnostic filepath (deals with / \ issues)
-        # This is a made-up file name for now
-        file_path = str(pathlib.Path('../Adv2DLLlibs/AdvLibLinux.Core64.dll'))
+        file_path = str(pathlib.Path('../Adv2DLLlibs/libAdvCore64.so'))
         advDLL = CDLL(file_path)
     elif platform.architecture()[0] == '32bit':
         # The following line generates a platform agnostic filepath (deals with / \ issues)
-        # This is a made-up file name for now
-        file_path = str(pathlib.Path('../Adv2DLLlibs/AdvLibLinux.Core32.dll'))
+        file_path = str(pathlib.Path('../Adv2DLLlibs/libAdvCore32.so'))
         advDLL = CDLL(file_path)
     else:
         raise ImportError("System is neither 64 bit nor 32 bit.")
