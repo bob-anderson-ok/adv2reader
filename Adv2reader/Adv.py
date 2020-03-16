@@ -87,6 +87,9 @@ class AdvFrameInfo:
     UtcMidExposureTimestampHi: int = 0
     Exposure: int = 0
 
+    DateString: str = ''                   # This a new item, not included in C# AdvFrameInfo
+    StartOfExposureTimestampString = ''    # This a new item, not included in C# AdvFrameInfo
+
     Gamma: float = 0.0
     Gain: float = 0.0
     Shutter: float = 0.0

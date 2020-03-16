@@ -9,6 +9,7 @@ import os
 import pathlib
 from ctypes import c_int, c_uint
 from typing import Dict, List, Tuple
+from datetime import datetime, timedelta
 
 import numpy as np
 
@@ -18,7 +19,8 @@ from Adv import (AdvFileInfo, AdvFrameInfo, AdvIndexEntry,
                  StreamId, TagPairType)
 from AdvError import AdvLibException
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt  # Used by exerciser() only
+import cv2                       # Used by exerciser() only
 
 
 class Adv2reader:
@@ -35,11 +37,16 @@ class Adv2reader:
         if not fileVersionErrorCode == 2:
             raise AdvLibException(f'{filename} is not an ADV version 2 file')
 
+        if fileInfo.IsColourImage:
+            raise AdvLibException(f'This file contains color images: not yet supported.')
+
+        # Provide a few useful top-level instance variables
         self.Width = fileInfo.Width
         self.Height = fileInfo.Height
         self.CountMainFrames = fileInfo.CountMainFrames
         self.CountCalibrationFrames = fileInfo.CountCalibrationFrames
 
+        # This instance variable gives the user access all file information, including the above items
         self.FileInfo = fileInfo
 
         self.pixels = None
@@ -63,9 +70,26 @@ class Adv2reader:
             err_msg = AdvError.ResolveErrorMessage(ret_val)
             return err_msg, self.pixels, self.frameInfo
 
+        # This code block adds date and start-of-exposure timestamp strings to self.frameInfo
+
+        datetime64 = self.frameInfo.UtcMidExposureTimestampLo + (self.frameInfo.UtcMidExposureTimestampHi << 32)
+        # Adjust from mid exposure to start-exposure
+        datetime64 -= self.frameInfo.Exposure // 2
+
+        usecs = int(datetime64 // 1000)  # Convert nanoseconds to microseconds - needed for call to timedelta
+        extra_digits = datetime64 - usecs * 1000
+        ts = (datetime(2010, 1, 1) + timedelta(microseconds=usecs))
+
+        self.frameInfo.DateString = f'{ts.year:04d}-{ts.month:02d}-{ts.day:02d}'
+        # This string below is in the form needed for direct insertion into a csv file column (Excel safe format)
+        self.frameInfo.StartOfExposureTimestampString = \
+            f'[{ts.hour:02d}:{ts.minute:02d}:{ts.second:02d}.{ts.microsecond:06d}{extra_digits}]'
+
+        # end code block
+
         return err_msg, self.pixels, self.frameInfo
 
-    def getMetaData(self) -> Dict[str, str]:
+    def getFileMetaData(self) -> Dict[str, str]:
         meta_dict = {}
         if self.FileInfo.SystemMetadataTagsCount > 0:
             for entryNum in range(self.FileInfo.SystemMetadataTagsCount):
@@ -131,8 +155,8 @@ def exerciser():
 
     rdr = None
     try:
-        # file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
-        file_path = str(pathlib.Path('../UnitTestSample.adv'))  # Platform agnostic way to specify a file path
+        file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
+        # file_path = str(pathlib.Path('../UnitTestSample.adv'))  # Platform agnostic way to specify a file path
         rdr = Adv2reader(file_path)
     except AdvLibException as adverr:
         print(repr(adverr))
@@ -141,36 +165,39 @@ def exerciser():
     # Show some top level instance variables
     print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
-    print(f'\nis color image: {rdr.FileInfo.IsColourImage}\n')
+    print(f'\nColor image: {rdr.FileInfo.IsColourImage}\n')
+    mainIndexList, calibIndexList = rdr.getIndexEntries()
+    print(f'mainIndexList has {len(mainIndexList)} entries')
+    print(f'calibIndexList has {len(calibIndexList)} entries')
     # Show a few main index entries
-    mainIndexList, _ = rdr.getIndexEntries()
-    for i in range(len(mainIndexList)):
+    # for i in range(len(mainIndexList)):
     # for i in range(3):
-        print(f'\nindex: {i:2d} ElapsedTicks: {mainIndexList[i].ElapsedTicks}')
-        print(f'index: {i:2d}  FrameOffset: {mainIndexList[i].FrameOffset}')
-        print(f'index: {i:2d}   BytesCount: {mainIndexList[i].BytesCount}')
+    #     print(f'\nindex: {i:2d} ElapsedTicks: {mainIndexList[i].ElapsedTicks}')
+    #     print(f'index: {i:2d}  FrameOffset: {mainIndexList[i].FrameOffset}')
+    #     print(f'index: {i:2d}   BytesCount: {mainIndexList[i].BytesCount}')
 
     image = None
-    for frame in range(rdr.CountMainFrames):
-    # for frame in range(4):
+    # for frame in range(rdr.CountMainFrames):
+    for frame in range(4):
         err, image, frameInfo = rdr.getMainImageData(frameNumber=frame)
 
         if not err:
             print(f'\nframe:       {frame}')
-            print(f'UtcMidLo:    {frameInfo.UtcMidExposureTimestampLo}')
-            print(f'UtcMidHi:    {frameInfo.UtcMidExposureTimestampHi}')
-            print(f'Exposure:    {frameInfo.Exposure}')
+            # print(f'UtcMidLo:    {frameInfo.UtcMidExposureTimestampLo}')
+            # print(f'UtcMidHi:    {frameInfo.UtcMidExposureTimestampHi}')
+            # print(f'Exposure:    {frameInfo.Exposure}')
+            print(frameInfo.DateString, frameInfo.StartOfExposureTimestampString)
             print(f'RawDataSize: {frameInfo.RawDataBlockSize}')
             # print(np.min(image), np.max(image))
-            plt.imshow(image)
-            plt.show()
+            # plt.imshow(image)
+            # plt.show()
+            cv2.imshow('Test image', image)
+            cv2.waitKey(0)
         else:
             print(err)
 
-    plt.imshow(image)
-    plt.show()
     print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
-    meta_data = rdr.getMetaData()
+    meta_data = rdr.getFileMetaData()
     for key in meta_data.keys():
         print(f'{key}: {meta_data[key]}')
     print(f'\ncloseFile returned: {rdr.closeFile()}')
