@@ -18,7 +18,7 @@ Then, sample usage from within your Python code is:
     rdr = None
     try:
         # Create a platform agnostic path to your .adv file (use forward slashes)
-        file_path = str(Path('path-to-your-file.adv'))  # Python will make Windows version as needed
+        file_path = str(Path('path/to/your/file.adv'))  # Python will make Windows version as needed
         
         # Create a 'reader' for the given file
         rdr = Adv2reader(file_path)
