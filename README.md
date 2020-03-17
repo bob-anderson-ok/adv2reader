@@ -46,8 +46,8 @@ For example:
     
 To get (and show) the file metadata (returned as a Dict[str, str]):
 
-    print(f'\nSYSTEM_META_DATA:')
-    meta_data = rdr.getSystemMetaData()
+    print(f'\nADV_FILE_META_DATA:')
+    meta_data = rdr.getAdvFileMetaData()
     for key in meta_data:
         print(f'    {key}: {meta_data[key]}')
         
