@@ -191,6 +191,20 @@ class Adv2reader:
 
 
 def exerciser():
+    import sys
+
+    num_frames_to_view = 6  # This currently the number of frames in the UnitTestSample.adv
+    file_to_use = '../UnitTestSample.adv'
+    if len(sys.argv) == 1:
+        print('\nNo command line arguments supplied. Defaults will be used.\n')
+    elif len(sys.argv) >= 2:
+        file_to_use = sys.argv[1]
+        if len(sys.argv) > 2:
+            num_frames_to_view = int(sys.argv[2])
+
+    print(f'\n\nfile to use: {file_to_use}')
+    print(f'{num_frames_to_view} frames are to be viewed\n')
+
     print(f'\nGeneral information:')
     print(f'    library: {AdvLib.GetLibraryVersion()}')
     print(f'    platform: {AdvLib.GetLibraryPlatformId()}')
@@ -198,8 +212,8 @@ def exerciser():
 
     rdr = None
     try:
-        file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
-        # file_path = str(pathlib.Path('../UnitTestSample.adv'))  # Platform agnostic way to specify a file path
+        # file_path = str(pathlib.Path('../ver2-test-file.adv'))  # Platform agnostic way to specify a file path
+        file_path = str(pathlib.Path(file_to_use))  # Platform agnostic way to specify a file path
         rdr = Adv2reader(file_path)
     except AdvLibException as adverr:
         print(repr(adverr))
@@ -232,10 +246,28 @@ def exerciser():
     #     print(f'index: {i:2d}  FrameOffset: {mainIndexList[i].FrameOffset}')
     #     print(f'index: {i:2d}   BytesCount: {mainIndexList[i].BytesCount}')
 
-    image = None
+    # For display purposes, we need to scale data that BITPIX less than 16 to a full 16 bit scale
+    scale_factor = 1 << (16 - int(meta_data.setdefault('BITPIX', '16')))
+    if scale_factor > 1:
+        print(f'\nThe image data has been scaled (multiplied) by {scale_factor} because bits/pixel is < 16')
+
+    if rdr.Width < 300:
+        zoom_factor = 20
+        print(f'A zoom factor of {zoom_factor} has been applied to the image to aid visibility.\n')
+
+    print(f'\n!!!!  Press any key to advance to next frame (with image selected)  !!!!')
+
     # for frame in range(rdr.CountMainFrames):
-    for frame in range(4):
+    for frame in range(num_frames_to_view):
         err, image, frameInfo, status = rdr.getMainImageAndStatusData(frameNumber=frame)
+
+        image = image * scale_factor
+
+        # If we're running a UnitTestSample with tiny images (too conserve space), we automatically zoom the image
+        if rdr.Width < 300:
+            zoom_factor = 20
+            image = np.repeat(image, zoom_factor, axis=0)
+            image = np.repeat(image, zoom_factor, axis=1)
 
         if not err:
             print(f'\nframe: {frame} STATUS:')
