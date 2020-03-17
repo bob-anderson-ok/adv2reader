@@ -28,7 +28,7 @@ Then, sample usage from within your Python code is:
         exit()
     
     except IOError as ioerr:
-        print(repr(adverr))
+        print(repr(ioerr))
         exit()
 
 Now that the file has been opened and a 'reader' (rdr) created for it, 
