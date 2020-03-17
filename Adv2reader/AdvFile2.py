@@ -126,11 +126,16 @@ class Adv2reader:
 
         return err_msg, self.pixels, self.frameInfo, status_dict
 
-    def getSystemMetaData(self) -> Dict[str, str]:
+    def getAdvFileMetaData(self) -> Dict[str, str]:
         meta_dict = {}
         if self.FileInfo.SystemMetadataTagsCount > 0:
             for entryNum in range(self.FileInfo.SystemMetadataTagsCount):
                 err_msg, name, value = AdvLib.AdvVer2_GetTagPairValues(TagPairType.SystemMetaData, entryNum)
+                if not err_msg:
+                    meta_dict.update({name: value})
+        if self.FileInfo.UserMetadataTagsCount > 0:
+            for entryNum in range(self.FileInfo.UserMetadataTagsCount):
+                err_msg, name, value = AdvLib.AdvVer2_GetTagPairValues(TagPairType.UserMetaData, entryNum)
                 if not err_msg:
                     meta_dict.update({name: value})
         return meta_dict
@@ -215,8 +220,8 @@ def exerciser():
         tagType, tagName = entry
         print(f'    {tagName}: {tagType}')
 
-    print(f'\nSYSTEM_META_DATA:')
-    meta_data = rdr.getSystemMetaData()
+    print(f'\nADV_FILE_META_DATA:')
+    meta_data = rdr.getAdvFileMetaData()
     for key in meta_data:
         print(f'    {key}: {meta_data[key]}')
 
