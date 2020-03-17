@@ -217,7 +217,7 @@ def exerciser():
 
     print(f'\nSYSTEM_META_DATA:')
     meta_data = rdr.getSystemMetaData()
-    for key in meta_data.keys():
+    for key in meta_data:
         print(f'    {key}: {meta_data[key]}')
 
     # Show a few main index entries
