@@ -10,17 +10,12 @@ import pathlib
 from ctypes import c_int, c_uint
 from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
-
 import numpy as np
-
-import AdvError
+from AdvError import ResolveErrorMessage, S_OK
 import AdvLib
-from Adv import (AdvFileInfo, AdvFrameInfo, AdvIndexEntry,
-                 StreamId, TagPairType)
+from Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
 from AdvError import AdvLibException
-
-# import matplotlib.pyplot as plt  # Used by exerciser() only
-import cv2                       # Used by exerciser() only
+import cv2   # Used by exerciser() only
 
 
 class Adv2reader:
@@ -33,7 +28,8 @@ class Adv2reader:
 
         if fileVersionErrorCode > 0x70000000:
             raise AdvLibException(f'There was an error opening {filename}: '
-                                  f'{AdvError.ResolveErrorMessage(fileVersionErrorCode)}')
+                                  f'{ResolveErrorMessage(fileVersionErrorCode)}')
+
         if not fileVersionErrorCode == 2:
             raise AdvLibException(f'{filename} is not an ADV version 2 file')
 
@@ -52,23 +48,36 @@ class Adv2reader:
         self.pixels = None
         self.sysErrLength: int = 0
         self.frameInfo = AdvFrameInfo()
+        self.statusTagInfo = []
 
-    def getMainImageData(self, frameNumber: int) -> Tuple[str, np.ndarray, AdvFrameInfo]:
+        for tagId in range(0, fileInfo.StatusTagsCount):
+            tagType, tagName = AdvLib.AdvVer2_GetStatusTagInfo(tagId)
+            if tagName is not None:
+                self.statusTagInfo.append((tagType, tagName))
+
+    def getMainImageAndStatusData(self, frameNumber: int) -> Tuple[str, np.ndarray, AdvFrameInfo, Dict[str, any]]:
+        return self._getGenericImageAndStatusData(frameNumber=frameNumber, streamType=StreamId.Main)
+
+    def getCalibImageAndStatusData(self, frameNumber: int) -> Tuple[str, np.ndarray, AdvFrameInfo, Dict[str, any]]:
+        return self._getGenericImageAndStatusData(frameNumber=frameNumber, streamType=StreamId.Calibration)
+
+    def _getGenericImageAndStatusData(self, frameNumber: int, streamType: StreamId) -> \
+            Tuple[str, np.ndarray, AdvFrameInfo, Dict[str, any]]:
         err_msg = ''
         # Create an array of c_uint to hold the pixel values
         pixel_array = (c_uint * (self.Width * self.Height))()
 
         ret_val = AdvLib.AdvVer2_GetFramePixels(
-            streamId=StreamId.Main, frameNo=frameNumber,
+            streamId=streamType, frameNo=frameNumber,
             pixels=pixel_array, frameInfo=self.frameInfo, systemErrorLen=self.sysErrLength
         )
 
         # Convert pixel_array to 1D numpy array, then reshape into 2D numpy array
         self.pixels = np.reshape(np.array(pixel_array, dtype='uint16'), newshape=(self.Height, self.Width))
 
-        if not ret_val == AdvError.S_OK:
-            err_msg = AdvError.ResolveErrorMessage(ret_val)
-            return err_msg, self.pixels, self.frameInfo
+        if ret_val is not S_OK:
+            err_msg = ResolveErrorMessage(ret_val)
+            return err_msg, self.pixels, self.frameInfo, {}
 
         # This code block adds date and start-of-exposure timestamp strings to self.frameInfo
 
@@ -76,20 +85,48 @@ class Adv2reader:
         # Adjust from mid exposure to start-exposure
         datetime64 -= self.frameInfo.Exposure // 2
 
-        usecs = int(datetime64 // 1000)  # Convert nanoseconds to microseconds - needed for call to timedelta
-        extra_digits = datetime64 - usecs * 1000
-        ts = (datetime(2010, 1, 1) + timedelta(microseconds=usecs))
+        usecs = datetime64 // 1000  # Convert nanoseconds to microseconds - needed for call to timedelta
+        ts = datetime(2010, 1, 1) + timedelta(microseconds=usecs)
 
         self.frameInfo.DateString = f'{ts.year:04d}-{ts.month:02d}-{ts.day:02d}'
         # This string below is in the form needed for direct insertion into a csv file column (Excel safe format)
         self.frameInfo.StartOfExposureTimestampString = \
-            f'[{ts.hour:02d}:{ts.minute:02d}:{ts.second:02d}.{ts.microsecond:06d}{extra_digits}]'
+            f'[{ts.hour:02d}:{ts.minute:02d}:{ts.second:02d}.{ts.microsecond:06d}]'
 
         # end code block
 
-        return err_msg, self.pixels, self.frameInfo
+        status_dict = {}
+        for i in range(len(self.statusTagInfo)):
+            tagType, tagName = self.statusTagInfo[i]
+            if tagType == Adv2TagType.Int8:
+                val = AdvLib.AdvVer2_GetStatusTagUInt8(i)
+                status_dict.update({tagName: val})
+            if tagType == Adv2TagType.Int16:
+                val = AdvLib.AdvVer2_GetStatusTagInt16(i)
+                status_dict.update({tagName: val})
+            if tagType == Adv2TagType.Int32:
+                val = AdvLib.AdvVer2_GetStatusTagInt32(i)
+                status_dict.update({tagName: val})
+            if tagType == Adv2TagType.Int64:
+                val = AdvLib.AdvVer2_GetStatusTagInt64(i)
+                if tagName == 'SystemTime':
+                    usecs = val // 1000  # Convert nanoseconds to microseconds - for timedelta
+                    ts = datetime(2010, 1, 1) + timedelta(microseconds=usecs)
+                    val_str = (f'{ts.year:04d}-{ts.month:02d}-{ts.day:02d} '
+                               f'[{ts.hour:02d}:{ts.minute:02d}:{ts.second:02d}.{ts.microsecond:06d}]')
+                    status_dict.update({tagName: val_str})
+                else:
+                    status_dict.update({tagName: val})
+            if tagType == Adv2TagType.Real:
+                val = AdvLib.AdvVer2_GetStatusTagReal(i)
+                status_dict.update({tagName: val})
+            if tagType == Adv2TagType.UTF8String:
+                val = AdvLib.AdvVer2_GetStatusTagUTF8String(i)
+                status_dict.update({tagName: val})
 
-    def getFileMetaData(self) -> Dict[str, str]:
+        return err_msg, self.pixels, self.frameInfo, status_dict
+
+    def getSystemMetaData(self) -> Dict[str, str]:
         meta_dict = {}
         if self.FileInfo.SystemMetadataTagsCount > 0:
             for entryNum in range(self.FileInfo.SystemMetadataTagsCount):
@@ -107,7 +144,7 @@ class Adv2reader:
 
         ret_val = AdvLib.AdvVer2_GetIndexEntries(mainIndex, calibIndex)
 
-        if ret_val == AdvError.S_OK:
+        if ret_val is S_OK:
             mainList = []
             calibList = []
 
@@ -141,7 +178,7 @@ class Adv2reader:
 
             return mainList, calibList
         else:
-            raise AdvLibException(f'{AdvError.ResolveErrorMessage(ret_val)}')
+            raise AdvLibException(f'{ResolveErrorMessage(ret_val)}')
 
     @staticmethod
     def closeFile():
@@ -165,10 +202,15 @@ def exerciser():
     # Show some top level instance variables
     print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
+    for entry in rdr.statusTagInfo:
+        tagType, tagName = entry
+        print(f'{tagName}:{tagType}')
+
     print(f'\nColor image: {rdr.FileInfo.IsColourImage}\n')
     mainIndexList, calibIndexList = rdr.getIndexEntries()
     print(f'mainIndexList has {len(mainIndexList)} entries')
     print(f'calibIndexList has {len(calibIndexList)} entries')
+
     # Show a few main index entries
     # for i in range(len(mainIndexList)):
     # for i in range(3):
@@ -179,25 +221,21 @@ def exerciser():
     image = None
     # for frame in range(rdr.CountMainFrames):
     for frame in range(4):
-        err, image, frameInfo = rdr.getMainImageData(frameNumber=frame)
+        err, image, frameInfo, status = rdr.getMainImageAndStatusData(frameNumber=frame)
 
         if not err:
             print(f'\nframe:       {frame}')
-            # print(f'UtcMidLo:    {frameInfo.UtcMidExposureTimestampLo}')
-            # print(f'UtcMidHi:    {frameInfo.UtcMidExposureTimestampHi}')
-            # print(f'Exposure:    {frameInfo.Exposure}')
             print(frameInfo.DateString, frameInfo.StartOfExposureTimestampString)
-            print(f'RawDataSize: {frameInfo.RawDataBlockSize}')
-            # print(np.min(image), np.max(image))
-            # plt.imshow(image)
-            # plt.show()
+            # print(f'RawDataSize: {frameInfo.RawDataBlockSize}')
+            for k in status:
+                print(f'{k}: {status[k]}')
             cv2.imshow('Test image', image)
-            cv2.waitKey(0)
+            cv2.waitKey(0)  # You must press a key while the image is topmost to advance
         else:
             print(err)
 
     print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
-    meta_data = rdr.getFileMetaData()
+    meta_data = rdr.getSystemMetaData()
     for key in meta_data.keys():
         print(f'{key}: {meta_data[key]}')
     print(f'\ncloseFile returned: {rdr.closeFile()}')

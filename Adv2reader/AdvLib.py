@@ -10,17 +10,17 @@
 # 'public static class Adv2DLLlibs' (the pythonic equivalent is
 # a module with the methods defined at the top level, such as this)
 
-import os
 import pathlib
 import platform
-from ctypes import CDLL, byref, c_char_p, c_int, c_uint
+from ctypes import CDLL, byref, c_char_p, c_int, c_uint, pointer, c_int8, c_int16, c_int32, c_int64, c_float
 from struct import pack, unpack
 from typing import Tuple
 
-from Adv import AdvFileInfo, AdvFrameInfo, StreamId, TagPairType
+from Adv import AdvFileInfo, AdvFrameInfo, StreamId, TagPairType, Adv2TagType
+from AdvError import S_OK, ResolveErrorMessage, AdvLibException
 
-print(os.getcwd())
-
+# This mask is used to remove the sign bits from the 32 bit ret_val when it is converted to a Python int
+RET_VAL_MASK = 0xffffffff
 
 # The following code/tests will run at import time (startup) and raise/throw an exception if we can cannot
 # distinguish Windows 64bit/32bit from Mac 64bit/32bit from Linux 64bit/32bit or find libraries.  We
@@ -74,7 +74,7 @@ def AdvOpenFile(filepath: str, fileinfo: AdvFileInfo) -> int:
     fname_ptr = c_char_p(file_path_as_bytes)  # fname_ptr equivalent to: const char* fileName
 
     # Call into the library with C-compatible arguments
-    ret_val = advDLL.AdvOpenFile(fname_ptr, c_char_p(file_info))
+    ret_val = advDLL.AdvOpenFile(fname_ptr, c_char_p(file_info)) & RET_VAL_MASK
 
     # Extract the entries from the the C struct file_info into the Python structure fileInfo
     fileinfo.Width = unpack(advFileInfoFormat, file_info)[0]
@@ -98,15 +98,11 @@ def AdvOpenFile(filepath: str, fileinfo: AdvFileInfo) -> int:
     fileinfo.ImageSectionTagsCount = unpack(advFileInfoFormat, file_info)[18]
     fileinfo.ErrorStatusTagId = unpack(advFileInfoFormat, file_info)[19]
 
-    # ret_val is an int32.  We need to remove the sign-extension that happens during the int64 conversion
-    return ret_val & 0xffffffff
+    return ret_val
 
 
 def AdvCloseFile() -> int:
-    ret_val = advDLL.AdvCloseFile()
-
-    # ret_val is an int32.  We need to remove the sign-extension that happens during the int64 conversion
-    return ret_val & 0xffffffff
+    return advDLL.AdvCloseFile() & RET_VAL_MASK
 
 
 def AdvGetFileVersion(filepath: str) -> Tuple[str, int]:
@@ -126,8 +122,7 @@ def AdvGetFileVersion(filepath: str) -> Tuple[str, int]:
 
 
 def AdvVer2_GetFramePixels(streamId: StreamId, frameNo: int,
-                           pixels: c_uint, frameInfo: AdvFrameInfo, systemErrorLen: int) -> int:
-
+                           pixels: any, frameInfo: AdvFrameInfo, systemErrorLen: int) -> int:
     advFrameInfoFormat = '7I4f3Bb8I'  # format of AdvFrameInfo needed by pack() and unpack()
     # The above format specifies 7 * uint32 4 * float32 3 * uchar char 8 * uint32
     # Create a C style structure per the supplied format string
@@ -136,7 +131,7 @@ def AdvVer2_GetFramePixels(streamId: StreamId, frameNo: int,
 
     # Call into the library will C-compatible arguments
     ret_val = advDLL.AdvVer2_GetFramePixels(c_int(streamId.value), c_int(frameNo), pixels,
-                                            c_char_p(frame_info), byref(c_int(systemErrorLen)))
+                                            c_char_p(frame_info), byref(c_int(systemErrorLen))) & RET_VAL_MASK
 
     # Unpack the C struct frame_info into the Python struct frameInfo
     frameInfo.StartTicksLo = unpack(advFrameInfoFormat, frame_info)[0]
@@ -169,8 +164,7 @@ def AdvVer2_GetFramePixels(streamId: StreamId, frameNo: int,
     frameInfo.ImageLayoutId = unpack(advFrameInfoFormat, frame_info)[21]
     frameInfo.RawDataBlockSize = unpack(advFrameInfoFormat, frame_info)[22]
 
-    # ret_val is an int32.  We need to remove the sign-extension that happens during the int64 conversion
-    return ret_val & 0xffffffff
+    return ret_val
 
 
 def AdvVer2_GetTagPairValues(tagPairType: TagPairType, tagId: int) -> Tuple[int, str, str]:
@@ -182,18 +176,94 @@ def AdvVer2_GetTagPairValues(tagPairType: TagPairType, tagId: int) -> Tuple[int,
         c_int(tagId),
         c_char_p(tagName),
         c_char_p(tagValue)
-    )
-    tag_name_as_python_string = tagName.decode().strip('\0')    # This removes the null bytes
+    ) & RET_VAL_MASK
+    tag_name_as_python_string = tagName.decode().strip('\0')  # This removes the null bytes
     tag_value_as_python_string = tagValue.decode().strip('\0')  # This removes the null bytes
 
-    # ret_val is an int32.  We need to remove the sign-extension that happens during the int64 conversion
-    return ret_val & 0xffffffff, tag_name_as_python_string, tag_value_as_python_string
+    return ret_val, tag_name_as_python_string, tag_value_as_python_string
 
 
 def AdvVer2_GetIndexEntries(mainIndex, calibrationIndex) -> int:
-    ret_val = advDLL.AdvVer2_GetIndexEntries(mainIndex, calibrationIndex)
-    # ret_val is an int32.  We need to remove the sign-extension that happens during the int64 conversion
-    return ret_val & 0xffffffff
+    return advDLL.AdvVer2_GetIndexEntries(mainIndex, calibrationIndex) & RET_VAL_MASK
+
+
+def AdvVer2_GetStatusTagInfo(tagId: int) -> Tuple[Adv2TagType, str]:
+    pTagNameSize = pointer(c_int(0))
+    ret_val = advDLL.AdvVer2_GetStatusTagNameSize(c_uint(tagId), pTagNameSize) & RET_VAL_MASK
+
+    if ret_val is not S_OK:
+        raise AdvLibException(f'{ResolveErrorMessage(ret_val)}')
+
+    tagNameSize = pTagNameSize.contents.value
+    tagName = bytes('\0' * (tagNameSize + 1), 'utf8')
+    pTagType = pointer(c_int(0))
+    ret_val = advDLL.AdvVer2_GetStatusTagInfo(
+        c_uint(tagId),
+        c_char_p(tagName),
+        pTagType
+    ) & RET_VAL_MASK
+
+    if ret_val is not S_OK:
+        raise AdvLibException(f'{ResolveErrorMessage(ret_val)}')
+
+    tagType = pTagType.contents.value
+    return Adv2TagType(tagType), tagName.decode().strip('\0')
+
+
+def AdvVer2_GetStatusTagUInt8(tagId: int) -> int:
+    pTagValue = pointer(c_int8(0))
+    ret_val = advDLL.AdvVer2_GetStatusTagUInt8(c_uint(tagId), pTagValue) & RET_VAL_MASK
+    if ret_val is not S_OK:
+        return -1
+    return pTagValue.contents.value
+
+
+def AdvVer2_GetStatusTagInt16(tagId: int) -> int:
+    pTagValue = pointer(c_int16(0))
+    ret_val = advDLL.AdvVer2_GetStatusTag16(c_uint(tagId), pTagValue) & RET_VAL_MASK
+    if ret_val is not S_OK:
+        return -1
+    return pTagValue.contents.value
+
+
+def AdvVer2_GetStatusTagInt32(tagId: int) -> int:
+    pTagValue = pointer(c_int32(0))
+    ret_val = advDLL.AdvVer2_GetStatusTag32(c_uint(tagId), pTagValue) & RET_VAL_MASK
+    if ret_val is not S_OK:
+        return -1
+    return pTagValue.contents.value
+
+
+def AdvVer2_GetStatusTagInt64(tagId: int) -> int:
+    pTagValue = pointer(c_int64(0))
+    ret_val = advDLL.AdvVer2_GetStatusTag64(c_uint(tagId), pTagValue) & RET_VAL_MASK
+    if ret_val is not S_OK:
+        return -1
+    return pTagValue.contents.value
+
+
+def AdvVer2_GetStatusTagReal(tagId: int) -> float:
+    pTagValue = pointer(c_float(0))
+    ret_val = advDLL.AdvVer2_GetStatusTagReal(c_uint(tagId), pTagValue) & RET_VAL_MASK
+    if ret_val is not S_OK:
+        return -1
+    return pTagValue.contents.value
+
+
+def AdvVer2_GetStatusTagUTF8String(tagId: int) -> str:
+    pTagLen = pointer(c_int(0))
+    ret_val = advDLL.AdvVer2_GetStatusTagSizeUTF8String(c_uint(tagId), pTagLen) & RET_VAL_MASK
+
+    if ret_val is not S_OK:
+        raise AdvLibException(f'{ResolveErrorMessage(ret_val)}')
+
+    tagValue = bytes('\0' * (pTagLen.contents.value + 1), 'utf8')
+    ret_val = advDLL.AdvVer2_GetStatusTagUTF8String(c_uint(tagId), c_char_p(tagValue)) & RET_VAL_MASK
+
+    if ret_val is not S_OK:
+        raise AdvLibException(f'{ResolveErrorMessage(ret_val)}')
+
+    return tagValue.decode().strip('\0')
 
 
 def GetLibraryVersion() -> str:
