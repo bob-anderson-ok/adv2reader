@@ -50,9 +50,9 @@ class Adv2reader:
         self.frameInfo = AdvFrameInfo()
         self.statusTagInfo = []
 
-        for tagId in range(0, fileInfo.StatusTagsCount):
+        for tagId in range(fileInfo.StatusTagsCount):
             tagType, tagName = AdvLib.AdvVer2_GetStatusTagInfo(tagId)
-            if tagName is not None:
+            if tagName:
                 self.statusTagInfo.append((tagType, tagName))
 
     def getMainImageAndStatusData(self, frameNumber: int) -> Tuple[str, np.ndarray, AdvFrameInfo, Dict[str, any]]:
@@ -186,9 +186,10 @@ class Adv2reader:
 
 
 def exerciser():
-    print(f'\nlibrary: {AdvLib.GetLibraryVersion()}')
-    print(f'\nplatform: {AdvLib.GetLibraryPlatformId()}')
-    print(f'\nbitness: {AdvLib.GetLibraryBitness()}\n')
+    print(f'\nGeneral information:')
+    print(f'    library: {AdvLib.GetLibraryVersion()}')
+    print(f'    platform: {AdvLib.GetLibraryPlatformId()}')
+    print(f'    bitness: {AdvLib.GetLibraryBitness()}\n')
 
     rdr = None
     try:
@@ -200,16 +201,24 @@ def exerciser():
         exit()
 
     # Show some top level instance variables
-    print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
+    print(f'A few top-level instance variables of general interest:')
+    print(f'    Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}'
+          f'  NumCalibFrames: {rdr.CountCalibrationFrames}')
+    print(f'    Color image: {rdr.FileInfo.IsColourImage}')
+    mainIndexList, calibIndexList = rdr.getIndexEntries()
+    print(f'    mainIndexList has {len(mainIndexList)} entries')
+    print(f'    calibIndexList has {len(calibIndexList)} entries\n')
 
+    # Show the status tag name and types associated with each DATA_FRAME This is the layout of the STATUS_SECTION
+    print(f'STATUS_SECTION layout:')
     for entry in rdr.statusTagInfo:
         tagType, tagName = entry
-        print(f'{tagName}:{tagType}')
+        print(f'    {tagName}: {tagType}')
 
-    print(f'\nColor image: {rdr.FileInfo.IsColourImage}\n')
-    mainIndexList, calibIndexList = rdr.getIndexEntries()
-    print(f'mainIndexList has {len(mainIndexList)} entries')
-    print(f'calibIndexList has {len(calibIndexList)} entries')
+    print(f'\nSYSTEM_META_DATA:')
+    meta_data = rdr.getSystemMetaData()
+    for key in meta_data.keys():
+        print(f'    {key}: {meta_data[key]}')
 
     # Show a few main index entries
     # for i in range(len(mainIndexList)):
@@ -224,22 +233,19 @@ def exerciser():
         err, image, frameInfo, status = rdr.getMainImageAndStatusData(frameNumber=frame)
 
         if not err:
-            print(f'\nframe:       {frame}')
-            print(frameInfo.DateString, frameInfo.StartOfExposureTimestampString)
+            print(f'\nframe: {frame} STATUS:')
+            # print(frameInfo.DateString, frameInfo.StartOfExposureTimestampString)
             # print(f'RawDataSize: {frameInfo.RawDataBlockSize}')
             for k in status:
-                print(f'{k}: {status[k]}')
+                print(f'    {k}: {status[k]}')
             cv2.imshow('Test image', image)
             cv2.waitKey(0)  # You must press a key while the image is topmost to advance
         else:
             print(err)
 
-    print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
-    meta_data = rdr.getSystemMetaData()
-    for key in meta_data.keys():
-        print(f'{key}: {meta_data[key]}')
+    # print(f'\nimage.shape: {image.shape}  image.dtype: {image.dtype}\n')
     print(f'\ncloseFile returned: {rdr.closeFile()}')
-    print(f'\nun-needed closeFile returned: {rdr.closeFile()}\n')
+    # print(f'\nun-needed closeFile returned: {rdr.closeFile()}\n')
 
 
 if __name__ == "__main__":
