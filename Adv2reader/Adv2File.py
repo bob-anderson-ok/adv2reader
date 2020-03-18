@@ -11,10 +11,10 @@ from ctypes import c_int, c_uint
 from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 import numpy as np
-from AdvError import ResolveErrorMessage, S_OK
-import AdvLib
-from Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
-from AdvError import AdvLibException
+from Adv2reader.AdvError import ResolveErrorMessage, S_OK
+import Adv2reader.AdvLib
+from Adv2reader.Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
+from Adv2reader.AdvError import AdvLibException
 
 
 class Adv2reader:

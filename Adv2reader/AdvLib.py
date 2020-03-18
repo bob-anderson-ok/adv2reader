@@ -17,8 +17,8 @@ from ctypes import CDLL, byref, c_char_p, c_int, c_uint, pointer, c_int8, c_int1
 from struct import pack, unpack
 from typing import Tuple
 
-from Adv import AdvFileInfo, AdvFrameInfo, StreamId, TagPairType, Adv2TagType
-from AdvError import S_OK, ResolveErrorMessage, AdvLibException
+from Adv2reader.Adv import AdvFileInfo, AdvFrameInfo, StreamId, TagPairType, Adv2TagType
+from Adv2reader.AdvError import S_OK, ResolveErrorMessage, AdvLibException
 
 
 # This mask is used to remove the sign bits from the 32 bit ret_val when it is converted to a Python int

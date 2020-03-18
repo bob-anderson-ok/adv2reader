@@ -12,10 +12,10 @@ To install this package on your system:
 
 Then, sample usage from within your Python code is:
 
-    from Adv2reader.Adv2File import Adv2reader
     from pathlib import Path
     
-    rdr = None
+    from Adv2reader.Adv2File import Adv2reader
+    
     try:
         # Create a platform agnostic path to your .adv file (use forward slashes)
         file_path = str(Path('path/to/your/file.adv'))  # Python will make Windows version as needed
