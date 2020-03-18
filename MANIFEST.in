@@ -1,1 +1,2 @@
-graft Adv2DLLlibs
+graft adv2reader/Adv2DLLlibs
+include adv2reader/UnitTestSample.adv

@@ -37,6 +37,7 @@ setup(
     maintainer_email='bob.anderson.ok@gmail.com',
     keywords=KEYWORDS,
     long_description=README,
+    long_description_content_type="text/markdown",
     packages=["Adv2reader"],
     include_package_data=True,
     classifiers=CLASSIFIERS,

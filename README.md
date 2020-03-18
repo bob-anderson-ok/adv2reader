@@ -8,11 +8,11 @@ found at: <http://www.astrodigitalvideoformat.org/spec.html>
 
 To install this package on your system:
 
-    pip install adv2reader
+    pip install Adv2reader
 
 Then, sample usage from within your Python code is:
 
-    from adv2reader import Adv2reader
+    from Adv2reader.Adv2File import Adv2reader
     from pathlib import Path
     
     rdr = None

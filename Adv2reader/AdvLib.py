@@ -10,6 +10,7 @@
 # 'public static class Adv2DLLlibs' (the pythonic equivalent is
 # a module with the methods defined at the top level, such as this)
 
+
 import pathlib
 import platform
 from ctypes import CDLL, byref, c_char_p, c_int, c_uint, pointer, c_int8, c_int16, c_int32, c_int64, c_float
@@ -19,6 +20,7 @@ from typing import Tuple
 from Adv import AdvFileInfo, AdvFrameInfo, StreamId, TagPairType, Adv2TagType
 from AdvError import S_OK, ResolveErrorMessage, AdvLibException
 
+
 # This mask is used to remove the sign bits from the 32 bit ret_val when it is converted to a Python int
 RET_VAL_MASK = 0xffffffff
 
@@ -26,14 +28,16 @@ RET_VAL_MASK = 0xffffffff
 # distinguish Windows 64bit/32bit from Mac 64bit/32bit from Linux 64bit/32bit or find libraries.  We
 # allow such an event to be a fatal error.
 
+DLL_folder = pathlib.Path(__file__).parent / 'Adv2DLLlibs'
+
 if platform.system().lower().startswith('windows'):
     # We're running on a on a Windows system
     if platform.architecture()[0] == '64bit':
         # The following line generates a platform agnostic filepath (deals with / \ issues)
-        file_path = str(pathlib.Path('../Adv2DLLlibs/AdvLib.Core64.dll'))
+        file_path = str(DLL_folder / 'AdvLib.Core64.dll')
         advDLL = CDLL(file_path)
     elif platform.architecture()[0] == '32bit':
-        file_path = str(pathlib.Path('../Adv2DLLlibs/AdvLib.Core32.dll'))
+        file_path = str(DLL_folder / 'AdvLib.Core32.dll')
         advDLL = CDLL(file_path)
     else:
         raise ImportError("System is neither 64 bit nor 32 bit.")
@@ -41,7 +45,7 @@ elif platform.system().lower().startswith('darwin'):
     # We're running on MacOS
     if platform.architecture()[0] == '64bit':
         # The following line generates a platform agnostic filepath (deals with / \ issues)
-        file_path = str(pathlib.Path('../Adv2DLLlibs/libAdvCore.dylib'))
+        file_path = str(DLL_folder / 'libAdvCore.dylib')
         advDLL = CDLL(file_path)
     elif platform.architecture()[0] == '32bit':
         raise ImportError("No 32 bit library available for MacOS")
@@ -51,11 +55,12 @@ elif platform.system().lower().startswith('linux'):
     # We're running on a linux system
     if platform.architecture()[0] == '64bit':
         # The following line generates a platform agnostic filepath (deals with / \ issues)
-        file_path = str(pathlib.Path('../Adv2DLLlibs/libAdvCore64.so'))
+        file_path = str(DLL_folder / 'libAdvCore64.so')
         advDLL = CDLL(file_path)
     elif platform.architecture()[0] == '32bit':
         # The following line generates a platform agnostic filepath (deals with / \ issues)
-        file_path = str(pathlib.Path('../Adv2DLLlibs/libAdvCore32.so'))
+        file_path = str(DLL_folder / 'libAdvCore32.so')
+
         advDLL = CDLL(file_path)
     else:
         raise ImportError("System is neither 64 bit nor 32 bit.")
