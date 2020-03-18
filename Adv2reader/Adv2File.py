@@ -12,6 +12,7 @@ from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 import numpy as np
 from Adv2reader.AdvError import ResolveErrorMessage, S_OK
+from Adv2reader import AdvLib
 import Adv2reader.AdvLib
 from Adv2reader.Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
 from Adv2reader.AdvError import AdvLibException
@@ -192,6 +193,7 @@ class Adv2reader:
 def exerciser():
     import sys
     import cv2  # Used by exerciser() only
+    from Adv2reader import AdvLib
 
     default_file = pathlib.Path(__file__).parent / 'UnitTestSample.adv'
 

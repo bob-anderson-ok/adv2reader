@@ -1,4 +1,4 @@
-adv2reader
+Adv2reader
 ==========
 
 This package provides a 'reader' for .adv (AstroDigitalVideo) files.
