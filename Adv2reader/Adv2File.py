@@ -6,16 +6,22 @@
 # We use type hinting so that it is easy to see the intent as matching the C++ code
 
 import os
+
+# import sys
+# print('\nsys.path ...')
+# print('\n'.join(sys.path))
+# print('\ncurrent working directory ...')
+# print(os.getcwd(), '\n')
+
 import pathlib
 from ctypes import c_int, c_uint
 from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 import numpy as np
-from Adv2reader.AdvError import ResolveErrorMessage, S_OK
-from Adv2reader import AdvLib
-import Adv2reader.AdvLib
-from Adv2reader.Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
-from Adv2reader.AdvError import AdvLibException
+from AdvError import ResolveErrorMessage, S_OK
+import AdvLib
+from Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
+from AdvError import AdvLibException
 
 
 class Adv2reader:
@@ -193,7 +199,6 @@ class Adv2reader:
 def exerciser():
     import sys
     import cv2  # Used by exerciser() only
-    from Adv2reader import AdvLib
 
     default_file = pathlib.Path(__file__).parent / 'UnitTestSample.adv'
 
