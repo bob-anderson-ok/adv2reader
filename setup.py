@@ -1,6 +1,6 @@
 from setuptools import setup
 import pathlib
-from adv2reader import Version
+from Adv2 import Version
 
 
 VERSION = Version.version()
@@ -26,7 +26,7 @@ HERE = pathlib.Path.cwd()
 README = (HERE / "README.md").read_text()
 
 setup(
-    name="Adv2reader",
+    name="Adv2",
     python_requires='>=3.7',
     description='Adv2reader reads version 2 Astro Digital Video files.',
     license='License :: OSI Approved :: MIT License',
@@ -39,7 +39,7 @@ setup(
     keywords=KEYWORDS,
     long_description=README,
     long_description_content_type="text/markdown",
-    packages=["Adv2reader"],
+    packages=["Adv2"],
     include_package_data=True,
     classifiers=CLASSIFIERS,
     install_requires=INSTALL_REQUIRES,

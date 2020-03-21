@@ -8,13 +8,13 @@ found at: <http://www.astrodigitalvideoformat.org/spec.html>
 
 To install this package on your system:
 
-    pip install Adv2reader
+    pip install Adv2
 
 Then, sample usage from within your Python code is:
 
     from pathlib import Path
     
-    from Adv2reader.Adv2File import Adv2reader
+    from Adv2.Adv2File import Adv2reader
     
     try:
         # Create a platform agnostic path to your .adv file (use forward slashes)

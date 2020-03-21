@@ -18,10 +18,10 @@ from ctypes import c_int, c_uint
 from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 import numpy as np
-from AdvError import ResolveErrorMessage, S_OK
-import AdvLib
-from Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
-from AdvError import AdvLibException
+from Adv2.AdvError import ResolveErrorMessage, S_OK
+from Adv2 import AdvLib
+from Adv2.Adv import AdvFileInfo, AdvFrameInfo, AdvIndexEntry, StreamId, TagPairType, Adv2TagType
+from Adv2.AdvError import AdvLibException
 
 
 class Adv2reader:
@@ -94,10 +94,16 @@ class Adv2reader:
         usecs = datetime64 // 1000  # Convert nanoseconds to microseconds - needed for call to timedelta
         ts = datetime(2010, 1, 1) + timedelta(microseconds=usecs)
 
-        self.frameInfo.DateString = f'{ts.year:04d}-{ts.month:02d}-{ts.day:02d}'
-        # This string below is in the form needed for direct insertion into a csv file column (Excel safe format)
-        self.frameInfo.StartOfExposureTimestampString = \
-            f'[{ts.hour:02d}:{ts.minute:02d}:{ts.second:02d}.{ts.microsecond:06d}]'
+        # There 'should' always be a valid timestamp in an adv2 file, but if there is not, then there will be
+        # zeros in UtcMidExposureTimestampLo and Hi.  We return empty strings in this case.
+        if timedelta == 0:
+            self.frameInfo.DateString = ''
+            self.frameInfo.StartOfExposureTimestampString = ''
+        else:
+            self.frameInfo.DateString = f'{ts.year:04d}-{ts.month:02d}-{ts.day:02d}'
+            # This string below is in the form needed for direct insertion into a csv file column (Excel safe format)
+            self.frameInfo.StartOfExposureTimestampString = \
+                f'[{ts.hour:02d}:{ts.minute:02d}:{ts.second:02d}.{ts.microsecond:06d}]'
 
         # end code block
 
