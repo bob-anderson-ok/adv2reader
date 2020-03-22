@@ -8,7 +8,7 @@ VERSION = Version.version()
 KEYWORDS = ["ADV file reader", 'Astro Digital Video version 2 file reader']
 
 CLASSIFIERS = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "License :: OSI Approved :: MIT License",

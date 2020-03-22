@@ -1,7 +1,9 @@
-Adv2reader
-==========
+Adv2
+====
 
-This package provides a 'reader' for .adv (AstroDigitalVideo) files.
+This package provides a 'reader' for .adv (AstroDigitalVideo) Version 2 files.
+
+It is the result of a collaborative effort involving Bob Anderson and Hristo Pavlov.
 
 The specification for Astro Digital Video files can be 
 found at: <http://www.astrodigitalvideoformat.org/spec.html>
@@ -33,7 +35,7 @@ Then, sample usage from within your Python code is:
 
 Now that the file has been opened and a 'reader' (rdr) created for it, 
 there are instance variables available that will be useful.
-Here is how to print some of those out:
+Here is how to print some of those out (these give the image size and number of images in the file):
 
     print(f'Width: {rdr.Width}  Height: {rdr.Height}  NumMainFrames: {rdr.CountMainFrames}')
 
@@ -59,14 +61,17 @@ might also contain a CALIBRATION stream):
   
     
     for frame in range(rdr.CountMainFrames):
-        # To get frames from a CALIBRATION stream, use rdr.getCalibImageAndStatusData()
-        # status is a Dict[str, str]
         
+        # status is a Dict[str, str]
         err, image, frameInfo, status = rdr.getMainImageAndStatusData(frameNumber=frame)
+        # To get frames from a CALIBRATION stream, use rdr.getCalibImageAndStatusData()
 
         if not err:
+            # If timestamp info was not present in the file (highly unlikely),
+            # the timestamp string returned will be empty (== '')
+            if frameInfo.StartOfExposureTimestampString:
+                print(frameInfo.DateString, frameInfo.StartOfExposureTimestampString)
             print(f'\nframe: {frame} STATUS:')
-            print(frameInfo.DateString, frameInfo.StartOfExposureTimestampString)
             for entry in status:
                 print(f'    {entry}: {status[entry]}')
         else:
