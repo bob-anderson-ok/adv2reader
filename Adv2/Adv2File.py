@@ -29,6 +29,14 @@ class Adv2reader:
         if not os.path.isfile(filename):
             raise AdvLibException(f'Error: cannot find file ... {filename}')
 
+        # Get version number without trying to fully parse the file.
+        err, version = AdvLib.AdvGetFileVersion(filename)
+        if not err:
+            if not version == 2:
+                raise AdvLibException(f'ADV version {version} is unsupported --- only version 2 is supported')
+        else:
+            raise AdvLibException(err)
+
         fileInfo = AdvFileInfo()
         fileVersionErrorCode = AdvLib.AdvOpenFile(filename, fileInfo)
 
@@ -207,6 +215,7 @@ def exerciser():
     import cv2  # Used by exerciser() only
 
     default_file = pathlib.Path(__file__).parent / 'UnitTestSample.adv'
+    # default_file = pathlib.Path(__file__).parent / '2012-01-02 01h03m(0036).adv'  # Version 1 test file
 
     num_frames_to_view = 6  # This currently the number of frames in the UnitTestSample.adv
     file_to_use = default_file
@@ -224,6 +233,18 @@ def exerciser():
     print(f'    library: {AdvLib.GetLibraryVersion()}')
     print(f'    platform: {AdvLib.GetLibraryPlatformId()}')
     print(f'    bitness: {AdvLib.GetLibraryBitness()}\n')
+
+    # Get version number without trying to fully parse the file (which instantiating Adv2reader() does)
+    err, version = AdvLib.AdvGetFileVersion(str(file_to_use))
+    if not err:
+        if not version == 2:
+            print(f'ADV version {version} is unsupported --- only version 2 is supported')
+            return
+        else:
+            print(f'ADV file version {version} found\n')
+    else:
+        print(err)
+        return
 
     rdr = None
     try:

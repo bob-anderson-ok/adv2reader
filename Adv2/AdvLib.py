@@ -118,7 +118,7 @@ def AdvGetFileVersion(filepath: str) -> Tuple[str, int]:
         file_path_as_bytes = bytes(filepath + '\0', 'utf-8')
         fname_ptr = c_char_p(file_path_as_bytes)  # fname_ptr: const char* fileName
 
-        version_num = advDLL.AdvGetFileVersion(fname_ptr)
+        version_num = advDLL.AdvGetFileVersion(fname_ptr) & RET_VAL_MASK
 
         if version_num == 0:
             return f'Error - not an FSTF file: {filepath}', 0
