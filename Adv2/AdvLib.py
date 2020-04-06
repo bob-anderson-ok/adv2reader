@@ -260,6 +260,8 @@ def AdvVer2_GetStatusTagUTF8String(tagId: int) -> str:
     ret_val = advDLL.AdvVer2_GetStatusTagSizeUTF8String(c_uint(tagId), pTagLen) & RET_VAL_MASK
 
     if ret_val is not S_OK:
+        if ret_val == 0x81001004:  # missing status tag in frame is common --- return empty string
+            return ""
         raise AdvLibException(f'{ResolveErrorMessage(ret_val)}')
 
     tagValue = bytes('\0' * (pTagLen.contents.value + 1), 'utf8')

@@ -214,8 +214,9 @@ def exerciser():
     import sys
     import cv2  # Used by exerciser() only
 
-    default_file = pathlib.Path(__file__).parent / 'UnitTestSample.adv'
+    # default_file = pathlib.Path(__file__).parent / 'UnitTestSample.adv'
     # default_file = pathlib.Path(__file__).parent / '2012-01-02 01h03m(0036).adv'  # Version 1 test file
+    default_file = pathlib.Path(__file__).parent / '2018-juin-01 00-15-33 (1).aav'  # Version 2 aav test file
 
     num_frames_to_view = 6  # This currently the number of frames in the UnitTestSample.adv
     file_to_use = default_file
